@@ -153,7 +153,7 @@ impl Drop for Object {
     }
 }
 #[pymodule]
-#[pyo3(name = "goblin")]
+#[pyo3(name = "oelf")]
 fn py_goblin(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<Object>()?;
     Ok(())
