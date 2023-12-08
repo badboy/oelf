@@ -68,7 +68,7 @@ impl Object {
     #[getter]
     fn name(&self) -> Option<&str> {
         match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => macho.name.clone(),
+            goblin::Object::Mach(Mach::Binary(macho)) => macho.name,
             _ => unimplemented!(),
         }
     }
