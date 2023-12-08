@@ -98,6 +98,45 @@ def register_generator(
         )
 
 
+def register_headers(
+    gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
+) -> None:
+    def dynamic_entries_generator() -> Iterator[dict[str, Any]]:
+        header = gob.header
+        yield {
+            "magic": header.magic,
+            "cputype": header.cputype,
+            "cpusubtype": header.cpusubtype,
+            "filetype": header.filetype,
+            "ncmds": header.ncmds,
+            "sizeofcmds": header.sizeofcmds,
+            "flags": header.flags,
+            "reserved": header.reserved,
+        }
+
+    generator = Generator.make_generator(
+        [
+            "magic",
+            "cputype",
+            "cpusubtype",
+            "filetype",
+            "ncmds",
+            "sizeofcmds",
+            "flags",
+            "reserved",
+        ],
+        dynamic_entries_generator,
+    )
+
+    register_generator(
+        connection,
+        generator,
+        "macho_headers",
+        CacheFlag.HEADERS,
+        cache_flags,
+    )
+
+
 def register_symbols(
     gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
 ) -> None:
@@ -249,6 +288,7 @@ def register_imports(
 
 path = sys.argv[1]
 g = goblin.Object(path)
+register_headers(g, connection, CacheFlag.HEADERS)
 register_symbols(g, connection, CacheFlag.SYMBOLS)
 register_sections(g, connection, CacheFlag.SECTIONS)
 register_exports(g, connection, CacheFlag.EXPORTS)
