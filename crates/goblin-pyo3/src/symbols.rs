@@ -80,7 +80,7 @@ impl Symbol {
     }
 
     #[getter]
-    fn global(&self) -> bool {
+    fn is_global(&self) -> bool {
         self.meta.is_global()
     }
 
@@ -109,7 +109,7 @@ impl Symbol {
             "Symbol {{ name: {}, type: {}, global: {}, weak: {}, undefined: {}, stab: {}, meta: {:?} }}",
             self.name,
             self.typ(),
-            self.global(),
+            self.is_global(),
             self.weak(),
             self.undefined(),
             self.stab(),
