@@ -247,7 +247,8 @@ def register_imports(
     )
 
 
-g = goblin.Object("../mylib.dylib")
+path = sys.argv[1]
+g = goblin.Object(path)
 register_symbols(g, connection, CacheFlag.SYMBOLS)
 register_sections(g, connection, CacheFlag.SECTIONS)
 register_exports(g, connection, CacheFlag.EXPORTS)
