@@ -214,7 +214,7 @@ def register_imports(
             yield {
                 "name": imp.name,
                 "dylib": imp.dylib,
-                "is_lazy": imp.is_lazy,
+                "lazy": imp.is_lazy,
                 "offset": imp.offset,
                 "size": imp.size,
                 "address": imp.address,
@@ -227,7 +227,7 @@ def register_imports(
         [
             "name",
             "dylib",
-            "is_lazy",
+            "lazy",
             "offset",
             "size",
             "address",
