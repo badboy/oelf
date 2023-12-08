@@ -6,8 +6,9 @@ print(g.name)
 
 print("symbols")
 for sym in g.symbols():
-    print(sym)
-    break
+    if not sym.undefined:
+        print(sym)
+        break
 
 print("libs")
 print(g.libs)
@@ -20,3 +21,8 @@ print(len(g.exports()))
 
 print("imports")
 print(len(g.imports()))
+
+print("sections")
+sections = iter(g.sections())
+print(next(sections))
+print(next(sections))

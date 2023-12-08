@@ -1,19 +1,18 @@
-use std::{
-    fs::File,
-    io::Read,
-};
+use std::{fs::File, io::Read};
 
 use goblin::mach::Mach;
-use pyo3::{prelude::*, exceptions::PyTypeError};
+use pyo3::{exceptions::PyTypeError, prelude::*};
 
 mod exports;
 mod header;
 mod imports;
+mod sections;
 mod symbols;
 
 use exports::Export;
 use header::Header;
 use imports::Import;
+use sections::{Sections, Section};
 use symbols::Symbols;
 
 #[pyclass]
@@ -74,6 +73,23 @@ impl Object {
         }
     }
 
+    fn sections(&self) -> Sections {
+        match self.inner.as_ref().unwrap() {
+            goblin::Object::Mach(Mach::Binary(macho)) => {
+                let mut sections = vec![];
+                for sect_iter in macho.segments.sections() {
+                    sections.extend(sect_iter.map(|section| {
+                        let (sect, _data) = section.unwrap();
+                        Section::from(sect)
+
+                    }));
+                }
+                Sections { sections }
+            },
+            _ => unimplemented!(),
+        }
+    }
+
     #[getter]
     fn libs(&self) -> Vec<&str> {
         match self.inner.as_ref().unwrap() {
@@ -93,9 +109,11 @@ impl Object {
     fn exports(&self) -> Result<Vec<Export>, PyErr> {
         match self.inner.as_ref().unwrap() {
             goblin::Object::Mach(Mach::Binary(macho)) => {
-                let exports = macho.exports().map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
+                let exports = macho
+                    .exports()
+                    .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
                 Ok(exports.into_iter().map(|exp| exp.into()).collect())
-            },
+            }
             _ => unimplemented!(),
         }
     }
@@ -103,9 +121,11 @@ impl Object {
     fn imports(&self) -> Result<Vec<Import>, PyErr> {
         match self.inner.as_ref().unwrap() {
             goblin::Object::Mach(Mach::Binary(macho)) => {
-                let imports = macho.imports().map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
+                let imports = macho
+                    .imports()
+                    .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
                 Ok(imports.into_iter().map(|exp| exp.into()).collect())
-            },
+            }
             _ => unimplemented!(),
         }
     }
