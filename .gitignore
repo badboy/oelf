@@ -2,3 +2,4 @@
 *.so
 *.dylib
 **/target/
+*.egg-info
