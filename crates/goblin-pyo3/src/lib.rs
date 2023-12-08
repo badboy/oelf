@@ -137,9 +137,9 @@ impl Drop for Object {
         drop(obj);
 
         // SAFETY:
-        // We took `ptr` and `len` from the vec earlier,
-        // then leaked it to get a stic reference to it which was only held within `self.inner`,
-        // which has been dropped above.
+        // We took `ptr` and `len` from the vec earlier (and ensured `len` == `cap`),
+        // then leaked it to get a static reference to it
+        // which was only held within `self.inner`, which has been dropped above.
         unsafe {
             let vec = Vec::from_raw_parts(self.ptr, self.len, self.len);
             drop(vec);
