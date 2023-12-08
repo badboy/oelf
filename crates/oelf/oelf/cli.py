@@ -46,6 +46,8 @@ class CacheFlag(Flag):
     EXPORTS = auto()
     IMPORTS = auto()
     SYMBOLS = auto()
+    RPATHS = auto()
+    LIBS = auto()
     STRINGS = auto()
     VERSION_REQUIREMENTS = auto()
     VERSION_DEFINITIONS = auto()
@@ -288,6 +290,48 @@ def register_imports(
     )
 
 
+def register_rpaths(
+    gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
+) -> None:
+    def dynamic_entries_generator() -> Iterator[dict[str, Any]]:
+        for rpath in gob.rpaths:
+            yield {"path": g.path, "rpath": rpath}
+
+    generator = Generator.make_generator(
+        ["path", "rpath"],
+        dynamic_entries_generator,
+    )
+
+    register_generator(
+        connection,
+        generator,
+        "macho_rpaths",
+        CacheFlag.RPATHS,
+        cache_flags,
+    )
+
+
+def register_libs(
+    gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
+) -> None:
+    def dynamic_entries_generator() -> Iterator[dict[str, Any]]:
+        for lib in gob.libs:
+            yield {"path": g.path, "lib": lib}
+
+    generator = Generator.make_generator(
+        ["path", "lib"],
+        dynamic_entries_generator,
+    )
+
+    register_generator(
+        connection,
+        generator,
+        "macho_libs",
+        CacheFlag.RPATHS,
+        cache_flags,
+    )
+
+
 path = sys.argv[1]
 g = goblin.Object(path)
 register_headers(g, connection, CacheFlag.HEADERS)
@@ -295,6 +339,8 @@ register_symbols(g, connection, CacheFlag.SYMBOLS)
 register_sections(g, connection, CacheFlag.SECTIONS)
 register_exports(g, connection, CacheFlag.EXPORTS)
 register_imports(g, connection, CacheFlag.IMPORTS)
+register_rpaths(g, connection, CacheFlag.RPATHS)
+register_libs(g, connection, CacheFlag.LIBS)
 
 shell = apsw.shell.Shell(db=connection, stdin=sys.stdin)
 shell.command_prompt(["ölf> "])
