@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::{File, self}, io::Read};
 
 use goblin::mach::Mach;
 use pyo3::{exceptions::PyTypeError, prelude::*};
@@ -19,6 +19,8 @@ use symbols::Symbols;
 struct Object {
     len: usize,
     ptr: *mut u8,
+    #[pyo3(get)]
+    path: String,
     inner: Option<goblin::Object<'static>>,
 }
 
@@ -29,7 +31,8 @@ unsafe impl Send for Object {}
 impl Object {
     #[new]
     fn new(path: String) -> Self {
-        let mut file = File::open(path).unwrap();
+        let path = fs::canonicalize(path).unwrap();
+        let mut file = File::open(&path).unwrap();
         let size = file.metadata().map(|m| m.len() as usize).ok();
         let mut vec = Vec::with_capacity(size.unwrap_or(0));
         file.read_to_end(&mut vec).unwrap();
@@ -46,6 +49,7 @@ impl Object {
         Self {
             len,
             ptr,
+            path: path.display().to_string(),
             inner: Some(object),
         }
     }

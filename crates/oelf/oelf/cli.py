@@ -104,6 +104,7 @@ def register_headers(
     def dynamic_entries_generator() -> Iterator[dict[str, Any]]:
         header = gob.header
         yield {
+            "path": gob.path,
             "magic": header.magic,
             "cputype": header.cputype,
             "cpusubtype": header.cpusubtype,
@@ -116,6 +117,7 @@ def register_headers(
 
     generator = Generator.make_generator(
         [
+            "path",
             "magic",
             "cputype",
             "cpusubtype",
