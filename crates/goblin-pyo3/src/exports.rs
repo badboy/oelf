@@ -9,6 +9,17 @@ enum ExportTyp {
     Stub
 }
 
+#[pymethods]
+impl ExportTyp {
+    fn __str__(&self) -> &'static str {
+        match self {
+            ExportTyp::Regular => "regular",
+            ExportTyp::Reexport => "reexport",
+            ExportTyp::Stub => "stub",
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 #[pyclass]
 struct ExportInfo {
@@ -19,7 +30,7 @@ struct ExportInfo {
     #[pyo3(get)]
     flags: u64,
     #[pyo3(get)]
-    lib: String,
+    lib: Option<String>,
     #[pyo3(get)]
     lib_symbol_name: Option<String>,
 }
@@ -39,7 +50,7 @@ impl From<goblin::mach::exports::ExportInfo<'_>> for ExportInfo {
             Reexport { lib, lib_symbol_name, flags } => {
                 Self {
                     typ: ExportTyp::Reexport,
-                    lib: lib.to_string(),
+                    lib: Some(lib.to_string()),
                     lib_symbol_name: lib_symbol_name.map(|s| s.to_string()),
                     flags,
                     .. Default::default()
