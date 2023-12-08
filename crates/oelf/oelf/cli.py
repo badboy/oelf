@@ -44,6 +44,7 @@ class CacheFlag(Flag):
     INSTRUCTIONS = auto()
     SECTIONS = auto()
     EXPORTS = auto()
+    IMPORTS = auto()
     SYMBOLS = auto()
     STRINGS = auto()
     VERSION_REQUIREMENTS = auto()
@@ -124,6 +125,7 @@ def register_symbols(
         cache_flags,
     )
 
+
 def register_sections(
     gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
 ) -> None:
@@ -142,7 +144,17 @@ def register_sections(
             }
 
     generator = Generator.make_generator(
-        ["name", "segment", "addr", "size", "offset", "align", "reloff", "nreloc", "flags"],
+        [
+            "name",
+            "segment",
+            "addr",
+            "size",
+            "offset",
+            "align",
+            "reloff",
+            "nreloc",
+            "flags",
+        ],
         dynamic_entries_generator,
     )
 
@@ -172,7 +184,16 @@ def register_exports(
             }
 
     generator = Generator.make_generator(
-        ["name", "size", "offset", "type", "address", "flags", "lib", "lib_symbol_name"],
+        [
+            "name",
+            "size",
+            "offset",
+            "type",
+            "address",
+            "flags",
+            "lib",
+            "lib_symbol_name",
+        ],
         dynamic_entries_generator,
     )
 
@@ -185,10 +206,52 @@ def register_exports(
     )
 
 
+def register_imports(
+    gob: goblin.Object, connection: apsw.Connection, cache_flags: CacheFlag
+) -> None:
+    def dynamic_entries_generator() -> Iterator[dict[str, Any]]:
+        for imp in gob.imports():
+            yield {
+                "name": imp.name,
+                "dylib": imp.dylib,
+                "is_lazy": imp.is_lazy,
+                "offset": imp.offset,
+                "size": imp.size,
+                "address": imp.address,
+                "addend": imp.addend,
+                "is_weak": imp.is_weak,
+                "start_of_sequence_offset": imp.start_of_sequence_offset,
+            }
+
+    generator = Generator.make_generator(
+        [
+            "name",
+            "dylib",
+            "is_lazy",
+            "offset",
+            "size",
+            "address",
+            "addend",
+            "is_weak",
+            "start_of_sequence_offset",
+        ],
+        dynamic_entries_generator,
+    )
+
+    register_generator(
+        connection,
+        generator,
+        "macho_imports",
+        CacheFlag.IMPORTS,
+        cache_flags,
+    )
+
+
 g = goblin.Object("../mylib.dylib")
 register_symbols(g, connection, CacheFlag.SYMBOLS)
 register_sections(g, connection, CacheFlag.SECTIONS)
 register_exports(g, connection, CacheFlag.EXPORTS)
+register_imports(g, connection, CacheFlag.IMPORTS)
 
 shell = apsw.shell.Shell(db=connection, stdin=sys.stdin)
 shell.command_prompt(["ölf> "])
