@@ -1,4 +1,7 @@
-use std::{fs::{File, self}, io::Read};
+use std::{
+    fs::{self, File},
+    io::Read,
+};
 
 use goblin::mach::Mach;
 use pyo3::{exceptions::PyTypeError, prelude::*};
@@ -12,7 +15,7 @@ mod symbols;
 use exports::Export;
 use header::Header;
 use imports::Import;
-use sections::{Sections, Section};
+use sections::{Section, Sections};
 use symbols::Symbols;
 
 #[pyclass]
@@ -85,11 +88,10 @@ impl Object {
                     sections.extend(sect_iter.map(|section| {
                         let (sect, _data) = section.unwrap();
                         Section::from(sect)
-
                     }));
                 }
                 Sections { sections }
-            },
+            }
             _ => unimplemented!(),
         }
     }

@@ -1,4 +1,4 @@
-use goblin::mach::symbols::{N_TYPE, n_type_to_str, N_EXT, N_WEAK_REF, N_WEAK_DEF, N_UNDF, N_STAB};
+use goblin::mach::symbols::{n_type_to_str, N_EXT, N_STAB, N_TYPE, N_UNDF, N_WEAK_DEF, N_WEAK_REF};
 use pyo3::prelude::*;
 
 #[derive(Debug, Clone)]

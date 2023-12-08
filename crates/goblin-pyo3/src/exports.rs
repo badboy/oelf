@@ -6,7 +6,7 @@ enum ExportTyp {
     #[default]
     Regular,
     Reexport,
-    Stub
+    Stub,
 }
 
 #[pymethods]
@@ -39,32 +39,28 @@ impl From<goblin::mach::exports::ExportInfo<'_>> for ExportInfo {
     fn from(info: goblin::mach::exports::ExportInfo) -> Self {
         use goblin::mach::exports::ExportInfo::*;
         match info {
-            Regular { address, flags } => {
-                Self {
-                    typ: ExportTyp::Regular,
-                    address,
-                    flags,
-                    .. Default::default()
-                }
-            }
-            Reexport { lib, lib_symbol_name, flags } => {
-                Self {
-                    typ: ExportTyp::Reexport,
-                    lib: Some(lib.to_string()),
-                    lib_symbol_name: lib_symbol_name.map(|s| s.to_string()),
-                    flags,
-                    .. Default::default()
-                }
-            }
-            Stub {
-                flags, ..
-            } => {
-                Self {
-                    typ: ExportTyp::Stub,
-                    flags,
-                    .. Default::default()
-                }
-            }
+            Regular { address, flags } => Self {
+                typ: ExportTyp::Regular,
+                address,
+                flags,
+                ..Default::default()
+            },
+            Reexport {
+                lib,
+                lib_symbol_name,
+                flags,
+            } => Self {
+                typ: ExportTyp::Reexport,
+                lib: Some(lib.to_string()),
+                lib_symbol_name: lib_symbol_name.map(|s| s.to_string()),
+                flags,
+                ..Default::default()
+            },
+            Stub { flags, .. } => Self {
+                typ: ExportTyp::Stub,
+                flags,
+                ..Default::default()
+            },
         }
     }
 }
@@ -99,4 +95,3 @@ impl From<goblin::mach::exports::Export<'_>> for Export {
         }
     }
 }
-
