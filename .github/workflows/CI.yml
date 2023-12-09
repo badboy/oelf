@@ -80,6 +80,13 @@ jobs:
         with:
           name: wheels
           path: dist
+      - name: Test
+        run: |
+          python3 -m venv ${PWD}/.venv
+          . .venv/bin/activate
+          maturin --version
+          maturin develop
+          python3 test.py
 
   sdist:
     runs-on: ubuntu-latest
