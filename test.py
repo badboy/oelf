@@ -1,28 +1,12 @@
 import oelf
 
-g = oelf.Object("test.py")
-g = oelf.Object("mylib.dylib")
-print(g.header)
-print(g.name)
+g = oelf.Object("target/debug/liboelf.dylib")
+print(f"{g.header=}")
+print(f"{g.name=}")
 
 print("symbols")
-globsym = None
-start = -1
-end = 9999999999
-
-for sym in g.symbols():
-    if "META" in sym.name and sym.is_global:
-        if globsym is None:
-            globsym = sym
-            start = sym.meta.n_value
-
-for sym in g.symbols():
-    if sym.meta.n_value > start and sym.meta.n_value < end:
-        print(f"sym after the found one: {sym}")
-        end = sym.meta.n_value
-
-print(f"found symbol {globsym.name} from {start} to {end}, size: {end-start}")
-print(globsym)
+for symbol in g.symbols():
+    print(symbol)
 
 print("libs")
 print(g.libs)
@@ -31,12 +15,13 @@ print("rpaths")
 print(g.rpaths)
 
 print("exports")
-print(len(g.exports()))
+for export in g.exports():
+    print(export)
 
 print("imports")
-print(len(g.imports()))
+for imp in g.imports():
+    print(imp)
 
 print("sections")
-
-for idx, section in enumerate(g.sections()):
-    print(f"{idx+1}. {section}")
+for section in g.sections():
+    print(f"{section}")
