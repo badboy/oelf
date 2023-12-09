@@ -1,6 +1,7 @@
-import goblin
+import oelf
 
-g = goblin.Object("mylib.dylib")
+g = oelf.Object("test.py")
+g = oelf.Object("mylib.dylib")
 print(g.header)
 print(g.name)
 

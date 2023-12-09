@@ -24,16 +24,22 @@ struct Object {
     ptr: *mut u8,
     #[pyo3(get)]
     path: String,
-    inner: Option<goblin::Object<'static>>,
+    inner: Option<goblin::mach::MachO<'static>>,
 }
 
 // SAFETY: We only use `ptr` in `drop` to reconstruct a `Vec`
 unsafe impl Send for Object {}
 
+impl Object {
+    fn macho(&self) -> &goblin::mach::MachO {
+        self.inner.as_ref().unwrap()
+    }
+}
+
 #[pymethods]
 impl Object {
     #[new]
-    fn new(path: String) -> Self {
+    fn new(path: String) -> PyResult<Self> {
         let path = fs::canonicalize(path).unwrap();
         let mut file = File::open(&path).unwrap();
         let size = file.metadata().map(|m| m.len() as usize).ok();
@@ -49,91 +55,69 @@ impl Object {
         let obj = vec.leak();
         let object = goblin::Object::parse(obj).unwrap();
 
-        Self {
+        let macho = match object {
+            goblin::Object::Mach(Mach::Binary(macho)) => macho,
+            _ => return Err(PyErr::new::<PyTypeError, _>("not a macho file")),
+        };
+
+        Ok(Self {
             len,
             ptr,
             path: path.display().to_string(),
-            inner: Some(object),
-        }
+            inner: Some(macho),
+        })
     }
 
     #[getter]
     fn header(&self) -> Header {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => Header::from(macho.header),
-            _ => unimplemented!(),
-        }
+        self.macho().header.into()
     }
 
     #[getter]
     fn name(&self) -> Option<&str> {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => macho.name,
-            _ => unimplemented!(),
-        }
+        self.macho().name
     }
 
     fn symbols(&self) -> Symbols {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => Symbols::from(macho.symbols()),
-            _ => unimplemented!(),
-        }
+        Symbols::from(self.macho().symbols())
     }
 
     fn sections(&self) -> Sections {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => {
-                let mut sections = vec![];
-                for sect_iter in macho.segments.sections() {
-                    sections.extend(sect_iter.map(|section| {
-                        let (sect, _data) = section.unwrap();
-                        Section::from(sect)
-                    }));
-                }
-                Sections { sections }
-            }
-            _ => unimplemented!(),
+        let macho = self.macho();
+        let mut sections = vec![];
+        for sect_iter in macho.segments.sections() {
+            sections.extend(sect_iter.map(|section| {
+                let (sect, _data) = section.unwrap();
+                Section::from(sect)
+            }));
         }
+        Sections { sections }
     }
 
     #[getter]
     fn libs(&self) -> Vec<&str> {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => macho.libs.clone(),
-            _ => unimplemented!(),
-        }
+        self.macho().libs.clone()
     }
 
     #[getter]
     fn rpaths(&self) -> Vec<&str> {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => macho.rpaths.clone(),
-            _ => unimplemented!(),
-        }
+        self.macho().rpaths.clone()
     }
 
     fn exports(&self) -> Result<Vec<Export>, PyErr> {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => {
-                let exports = macho
-                    .exports()
-                    .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
-                Ok(exports.into_iter().map(|exp| exp.into()).collect())
-            }
-            _ => unimplemented!(),
-        }
+        let macho = self.macho();
+        let exports = macho
+            .exports()
+            .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
+        Ok(exports.into_iter().map(|exp| exp.into()).collect())
     }
 
     fn imports(&self) -> Result<Vec<Import>, PyErr> {
-        match self.inner.as_ref().unwrap() {
-            goblin::Object::Mach(Mach::Binary(macho)) => {
-                let imports = macho
-                    .imports()
-                    .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
-                Ok(imports.into_iter().map(|exp| exp.into()).collect())
-            }
-            _ => unimplemented!(),
-        }
+        let macho = self.macho();
+        let imports = macho
+            .imports()
+            .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
+        Ok(imports.into_iter().map(|exp| exp.into()).collect())
     }
 }
 
