@@ -1,5 +1,6 @@
+.envrc
 .venv
 *.so
 *.dylib
-**/target/
+target/
 *.egg-info
