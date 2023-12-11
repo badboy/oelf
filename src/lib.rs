@@ -9,6 +9,7 @@ use pyo3::{exceptions::PyTypeError, prelude::*};
 mod exports;
 mod header;
 mod imports;
+mod load_commands;
 mod sections;
 mod segments;
 mod symbols;
@@ -16,6 +17,7 @@ mod symbols;
 use exports::Export;
 use header::Header;
 use imports::Import;
+use load_commands::LoadCommand;
 use sections::{Section, Sections};
 use segments::Segment;
 use symbols::Symbols;
@@ -148,6 +150,14 @@ impl Object {
             .imports()
             .map_err(|_| PyErr::new::<PyTypeError, _>("failed"))?;
         Ok(imports.into_iter().map(|exp| exp.into()).collect())
+    }
+
+    fn load_commands(&self) -> Vec<LoadCommand> {
+        self.macho()
+            .load_commands
+            .iter()
+            .map(|cmd| cmd.into())
+            .collect()
     }
 }
 

@@ -34,3 +34,7 @@ for segment in g.segments():
 print("sections")
 for section in g.sections():
     print(f"{section}")
+
+print("load commands")
+for lcmd in g.load_commands():
+    print(lcmd)
