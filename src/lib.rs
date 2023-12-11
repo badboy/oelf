@@ -3,7 +3,7 @@ use std::{
     io::Read,
 };
 
-use goblin::mach::Mach;
+use goblin::mach::{Mach, SingleArch};
 use pyo3::{exceptions::PyTypeError, prelude::*};
 
 mod exports;
@@ -57,6 +57,24 @@ impl Object {
 
         let macho = match object {
             goblin::Object::Mach(Mach::Binary(macho)) => macho,
+            goblin::Object::Mach(Mach::Fat(march)) => {
+                let mut macho = None;
+                for arch in &march {
+                    let arch = arch.map_err(|_| {
+                        PyErr::new::<PyTypeError, _>("cannot parse single arch from Mach-O file")
+                    })?;
+
+                    if let SingleArch::MachO(m) = arch {
+                        macho = Some(m);
+                        break;
+                    }
+                }
+
+                match macho {
+                    Some(macho) => macho,
+                    None => return Err(PyErr::new::<PyTypeError, _>("not a macho file")),
+                }
+            }
             _ => return Err(PyErr::new::<PyTypeError, _>("not a macho file")),
         };
 

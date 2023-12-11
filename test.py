@@ -1,6 +1,11 @@
+import sys
 import oelf
 
-g = oelf.Object("target/debug/liboelf.dylib")
+path = "target/debug/liboelf.dylib"
+if len(sys.argv) > 1:
+    path = sys.argv[1]
+
+g = oelf.Object(path)
 print(f"{g.header=}")
 print(f"{g.name=}")
 
