@@ -27,6 +27,10 @@ print("imports")
 for imp in g.imports():
     print(imp)
 
+print("segments")
+for segment in g.segments():
+    print(f"{segment}")
+
 print("sections")
 for section in g.sections():
     print(f"{section}")

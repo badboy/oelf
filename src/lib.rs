@@ -10,12 +10,14 @@ mod exports;
 mod header;
 mod imports;
 mod sections;
+mod segments;
 mod symbols;
 
 use exports::Export;
 use header::Header;
 use imports::Import;
 use sections::{Section, Sections};
+use segments::Segment;
 use symbols::Symbols;
 
 #[pyclass]
@@ -100,13 +102,23 @@ impl Object {
         Symbols::from(self.macho().symbols())
     }
 
+    fn segments(&self) -> Vec<Segment> {
+        self.macho()
+            .segments
+            .into_iter()
+            .map(|seg| seg.into())
+            .collect()
+    }
+
     fn sections(&self) -> Sections {
         let macho = self.macho();
         let mut sections = vec![];
+        let mut idx = 0;
         for sect_iter in macho.segments.sections() {
             sections.extend(sect_iter.map(|section| {
+                idx += 1;
                 let (sect, _data) = section.unwrap();
-                Section::from(sect)
+                Section::from((idx, sect))
             }));
         }
         Sections { sections }

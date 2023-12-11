@@ -4,6 +4,8 @@ use pyo3::prelude::*;
 #[pyclass]
 pub struct Section {
     #[pyo3(get)]
+    index: usize,
+    #[pyo3(get)]
     name: Option<String>,
     #[pyo3(get)]
     segment: Option<String>,
@@ -30,9 +32,10 @@ impl Section {
     }
 }
 
-impl From<goblin::mach::segment::Section> for Section {
-    fn from(section: goblin::mach::segment::Section) -> Self {
+impl From<(usize, goblin::mach::segment::Section)> for Section {
+    fn from((index, section): (usize, goblin::mach::segment::Section)) -> Self {
         Section {
+            index,
             name: section.name().ok().map(|s| s.to_string()),
             segment: section.segname().ok().map(|s| s.to_string()),
             addr: section.addr,
